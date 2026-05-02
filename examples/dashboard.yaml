@@ -1,4 +1,4 @@
-type: custom:esphome-fp2-card
+type: custom:aqara-fp2-card
 entity_prefix: sensor.fp2_bedroom
 title: Bedroom FP2
 display_mode: full

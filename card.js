@@ -850,9 +850,21 @@ class ESPHomeFP2Card extends HTMLElement {
   }
 }
 
-customElements.define("esphome-fp2-card", ESPHomeFP2Card);
+if (!customElements.get("esphome-fp2-card")) {
+  customElements.define("esphome-fp2-card", ESPHomeFP2Card);
+}
+
+if (!customElements.get("aqara-fp2-card")) {
+  customElements.define("aqara-fp2-card", class AqaraFP2Card extends ESPHomeFP2Card {});
+}
 
 window.customCards = window.customCards || [];
+window.customCards.push({
+  type: "aqara-fp2-card",
+  name: "Aqara FP2 Card",
+  description: "Visualizes ESPHome Aqara FP2 radar zones, presence, and target tracking",
+  preview: true,
+});
 window.customCards.push({
   type: "esphome-fp2-card",
   name: "ESPHome FP2 Card",

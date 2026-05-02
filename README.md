@@ -37,10 +37,12 @@ implementation rather than a copied upstream source file.
 After installation, use:
 
 ```yaml
-type: custom:esphome-fp2-card
+type: custom:aqara-fp2-card
 entity_prefix: sensor.fp2_bedroom
 title: Bedroom FP2
 ```
+
+The module also registers `custom:esphome-fp2-card` as an alias.
 
 ## Manual Installation
 
@@ -81,7 +83,7 @@ Full entity and service details are in [docs/entity-contract.md](docs/entity-con
 ## Example
 
 ```yaml
-type: custom:esphome-fp2-card
+type: custom:aqara-fp2-card
 entity_prefix: sensor.fp2_bedroom
 title: Bedroom FP2
 display_mode: full
@@ -106,7 +108,7 @@ For `entity_prefix: sensor.fp2_bedroom`, the card derives:
 Override names when needed:
 
 ```yaml
-type: custom:esphome-fp2-card
+type: custom:aqara-fp2-card
 entity_prefix: sensor.fp2_bedroom
 map_config_service: my_fp2_get_map_config
 entities:

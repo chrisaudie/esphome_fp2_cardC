@@ -7,7 +7,7 @@ instructions.
 ## Card Config
 
 ```yaml
-type: custom:esphome-fp2-card
+type: custom:aqara-fp2-card
 entity_prefix: sensor.fp2_bedroom
 title: Bedroom FP2
 ```
@@ -27,7 +27,7 @@ For `sensor.fp2_bedroom`, the card looks for these entities:
 Override any derived entity when your names differ:
 
 ```yaml
-type: custom:esphome-fp2-card
+type: custom:aqara-fp2-card
 entity_prefix: sensor.fp2_bedroom
 entities:
   targets: sensor.custom_targets
@@ -53,7 +53,7 @@ esphome.fp2_bedroom_get_map_config
 Override it when needed:
 
 ```yaml
-type: custom:esphome-fp2-card
+type: custom:aqara-fp2-card
 entity_prefix: sensor.fp2_bedroom
 map_config_service: fp2_bedroom_get_map_config
 ```
