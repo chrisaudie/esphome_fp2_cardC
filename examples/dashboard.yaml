@@ -1,0 +1,8 @@
+type: custom:esphome-fp2-card
+entity_prefix: sensor.fp2_bedroom
+title: Bedroom FP2
+display_mode: full
+show_grid: true
+show_sensor_position: true
+show_zone_labels: true
+auto_tracking: false
