@@ -20,9 +20,14 @@ This card is inspired by the FP2 dashboard card documented in:
 - <https://github.com/jmlab-net/esphome_fp2_ng>
 - <https://github.com/JameZUK/esphome_fp2_ng>
 
-Those upstream repositories did not declare a license at the time this
-standalone repository was created, so this repository contains an original card
-implementation rather than a copied upstream source file.
+The card behavior and visual treatment are aligned with the FP2-specific
+upstream card: 14x14 radar canvas, room-boundary mask, interference/entry-exit
+overlays, zone labels, target tracking dots, posture initials, and a live
+tracking toggle.
+
+The current upstream checkout does not expose a `LICENSE` file through GitHub.
+This repository therefore keeps a standalone implementation rather than a
+byte-for-byte copy of upstream `card.js`.
 
 ## HACS Installation
 
@@ -75,6 +80,7 @@ JavaScript module
 | `show_sensor_position` | No | `true` | Draw the FP2 sensor marker |
 | `show_zone_labels` | No | `true` | Draw zone labels on the radar map |
 | `auto_tracking` | No | `false` | Turn on target reporting when the card loads, then turn it back off when the card unloads |
+| `mounting_position` | No | map service | Override sensor marker position: `wall`, `left_corner`, or `right_corner` |
 | `map_config_service` | No | derived | ESPHome service name without the `esphome.` domain |
 | `entities` | No | derived | Per-entity overrides |
 

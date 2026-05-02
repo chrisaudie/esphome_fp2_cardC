@@ -23,6 +23,7 @@ class ESPHomeFP2Card extends HTMLElement {
       show_sensor_position: true,
       show_zone_labels: true,
       auto_tracking: false,
+      mounting_position: undefined,
       entities: {},
       ...config,
     };
@@ -98,8 +99,8 @@ class ESPHomeFP2Card extends HTMLElement {
         </div>
         <div class="fp2-canvas-wrap">
           <canvas class="fp2-canvas"></canvas>
+          <div class="fp2-info"></div>
         </div>
-        <div class="fp2-status"></div>
         <div class="fp2-message" hidden></div>
       </ha-card>
       <style>
@@ -178,12 +179,23 @@ class ESPHomeFP2Card extends HTMLElement {
           height: auto;
         }
 
-        .fp2-status {
+        .fp2-info {
+          position: absolute;
+          right: 8px;
+          bottom: 8px;
+          left: 8px;
           display: flex;
           flex-wrap: wrap;
           gap: 8px;
-          margin-top: 10px;
+          align-items: center;
+          padding: 6px 10px;
+          overflow: hidden;
           color: var(--secondary-text-color);
+          background: rgba(0, 0, 0, 0.62);
+          border-radius: 6px;
+          -webkit-backdrop-filter: blur(4px);
+          backdrop-filter: blur(4px);
+          box-sizing: border-box;
           font-size: 13px;
           line-height: 1.35;
         }
@@ -193,12 +205,15 @@ class ESPHomeFP2Card extends HTMLElement {
           align-items: center;
           max-width: 100%;
           gap: 6px;
-          padding: 4px 8px;
+          min-width: 0;
           overflow: hidden;
-          background: var(--secondary-background-color);
-          border-radius: 999px;
           text-overflow: ellipsis;
           white-space: nowrap;
+        }
+
+        .fp2-chip span:last-child {
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .fp2-dot {
@@ -227,7 +242,7 @@ class ESPHomeFP2Card extends HTMLElement {
     this._canvasWrap = this.querySelector(".fp2-canvas-wrap");
     this._canvas = this.querySelector(".fp2-canvas");
     this._ctx = this._canvas.getContext("2d");
-    this._status = this.querySelector(".fp2-status");
+    this._status = this.querySelector(".fp2-info");
     this._message = this.querySelector(".fp2-message");
     this._trackingButton = this.querySelector(".fp2-tracking");
 
@@ -298,7 +313,7 @@ class ESPHomeFP2Card extends HTMLElement {
       edgeGrid: this._parseGrid(this._mapConfig.edge_grid),
       exitGrid: this._parseGrid(this._mapConfig.exit_grid),
       interferenceGrid: this._parseGrid(this._mapConfig.interference_grid),
-      mountingPosition: this._mapConfig.mounting_position || "wall",
+      mountingPosition: this._config.mounting_position || this._mapConfig.mounting_position || "wall",
       zones,
       targets: this._decodeTargets(getState(this._entity("targets"))),
       totalPeople: this._numberState(this._entity("total_people")),
@@ -350,7 +365,7 @@ class ESPHomeFP2Card extends HTMLElement {
 
     this._fillBackground(width, height);
     this._drawGrid(bounds, cellSize);
-    this._drawMask(data.edgeGrid, bounds, cellSize, "rgba(0, 0, 0, 0.28)", "rgba(255, 255, 255, 0.08)");
+    this._drawEdgeGrid(data.edgeGrid, bounds, cellSize);
     this._drawMask(data.interferenceGrid, bounds, cellSize, "rgba(244, 67, 54, 0.22)", "rgba(244, 67, 54, 0.55)");
     this._drawMask(data.exitGrid, bounds, cellSize, "rgba(76, 175, 80, 0.16)", "rgba(76, 175, 80, 0.55)");
     this._drawZones(data.zones, bounds, cellSize);
@@ -406,6 +421,24 @@ class ESPHomeFP2Card extends HTMLElement {
 
       this._ctx.fillRect(px, py, cellSize, cellSize);
       this._ctx.strokeRect(px + 1, py + 1, cellSize - 2, cellSize - 2);
+    }, cellSize);
+  }
+
+  _drawEdgeGrid(grid, bounds, cellSize) {
+    this._ctx.fillStyle = "rgba(0, 0, 0, 0.30)";
+    this._ctx.strokeStyle = "rgba(255, 255, 255, 0.06)";
+    this._ctx.lineWidth = 1;
+
+    this._forVisibleCell(bounds, (x, y, px, py) => {
+      if (!grid[y][x]) {
+        return;
+      }
+
+      this._ctx.fillRect(px, py, cellSize, cellSize);
+      this._ctx.beginPath();
+      this._ctx.moveTo(px, py);
+      this._ctx.lineTo(px + cellSize, py + cellSize);
+      this._ctx.stroke();
     }, cellSize);
   }
 
@@ -498,6 +531,18 @@ class ESPHomeFP2Card extends HTMLElement {
       this._ctx.textAlign = "center";
       this._ctx.textBaseline = "middle";
       this._ctx.fillText(this._postureInitial(target.posture, target.id), x, y);
+
+      if (Math.abs(target.velocity) > 5) {
+        const speed = Math.min(Math.abs(target.velocity) / 100, 1);
+        const line = radius * 1.5 * speed;
+
+        this._ctx.strokeStyle = "rgba(255, 255, 255, 0.72)";
+        this._ctx.lineWidth = 2;
+        this._ctx.beginPath();
+        this._ctx.moveTo(x, y + radius + 2);
+        this._ctx.lineTo(x, y + radius + 2 + (target.velocity > 0 ? -line : line));
+        this._ctx.stroke();
+      }
     });
   }
 
@@ -530,6 +575,15 @@ class ESPHomeFP2Card extends HTMLElement {
     this._ctx.beginPath();
     this._ctx.arc(x, y, 4, 0, Math.PI * 2);
     this._ctx.fill();
+
+    const canvasWidth = (bounds.maxX - bounds.minX + 1) * cellSize;
+    const labelX = Math.min(Math.max(x, 24), canvasWidth - 24);
+
+    this._ctx.fillStyle = "rgba(244, 67, 54, 0.92)";
+    this._ctx.font = "700 10px system-ui, sans-serif";
+    this._ctx.textAlign = "center";
+    this._ctx.textBaseline = "top";
+    this._ctx.fillText("SENSOR", labelX, y + 30);
   }
 
   _updateStatus(data) {
@@ -544,8 +598,8 @@ class ESPHomeFP2Card extends HTMLElement {
       chips.push(this._chip("target", `${data.targets.length} live ${data.targets.length === 1 ? "target" : "targets"}`));
     }
 
-    data.zones.filter((zone) => zone.occupied).forEach((zone) => {
-      chips.push(this._chip("zone", zone.name));
+    data.zones.forEach((zone) => {
+      chips.push(this._chip(zone.occupied ? "zone on" : "zone", zone.name));
     });
 
     if (data.radarState) {
@@ -756,7 +810,12 @@ class ESPHomeFP2Card extends HTMLElement {
       return { minX: 0, maxX: 13, minY: 0, maxY: 13 };
     }
 
-    const grids = [data.edgeGrid, ...data.zones.map((zone) => zone.grid)];
+    const insideBounds = this._inverseGridBounds(data.edgeGrid);
+    if (insideBounds) {
+      return this._padBounds(insideBounds, 1);
+    }
+
+    const grids = data.zones.map((zone) => zone.grid);
     let minX = 13;
     let minY = 13;
     let maxX = 0;
@@ -780,12 +839,7 @@ class ESPHomeFP2Card extends HTMLElement {
       return { minX: 0, maxX: 13, minY: 0, maxY: 13 };
     }
 
-    return {
-      minX: Math.max(0, minX - 1),
-      maxX: Math.min(13, maxX + 1),
-      minY: Math.max(0, minY - 1),
-      maxY: Math.min(13, maxY + 1),
-    };
+    return this._padBounds({ minX, maxX, minY, maxY }, 1);
   }
 
   _gridBounds(grid) {
@@ -806,6 +860,39 @@ class ESPHomeFP2Card extends HTMLElement {
     }
 
     return maxX >= 0 ? { minX, maxX, minY, maxY } : null;
+  }
+
+  _inverseGridBounds(grid) {
+    let hasMaskedCell = false;
+    let minX = 14;
+    let minY = 14;
+    let maxX = -1;
+    let maxY = -1;
+
+    for (let y = 0; y < 14; y += 1) {
+      for (let x = 0; x < 14; x += 1) {
+        if (grid[y][x]) {
+          hasMaskedCell = true;
+          continue;
+        }
+
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
+    }
+
+    return hasMaskedCell && maxX >= 0 ? { minX, maxX, minY, maxY } : null;
+  }
+
+  _padBounds(bounds, padding) {
+    return {
+      minX: Math.max(0, bounds.minX - padding),
+      maxX: Math.min(13, bounds.maxX + padding),
+      minY: Math.max(0, bounds.minY - padding),
+      maxY: Math.min(13, bounds.maxY + padding),
+    };
   }
 
   _forVisibleCell(bounds, callback, cellSize) {

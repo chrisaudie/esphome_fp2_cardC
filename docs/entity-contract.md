@@ -58,6 +58,15 @@ entity_prefix: sensor.fp2_bedroom
 map_config_service: fp2_bedroom_get_map_config
 ```
 
+If the map service does not return the correct mounting location, override it
+on the card:
+
+```yaml
+type: custom:aqara-fp2-card
+entity_prefix: sensor.fp2_bedroom
+mounting_position: left_corner
+```
+
 The service response should contain:
 
 | Key | Description |
